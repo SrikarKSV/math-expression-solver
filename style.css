@@ -1,0 +1,50 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Oooh Baby", cursive;
+  font-weight: bold;
+  height: 100vh;
+  background-color: #2a2e35;
+  color: #b2becd;
+}
+
+form {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+label {
+  font-size: 5rem;
+}
+
+input,
+button {
+  font: inherit;
+  font-size: 3rem;
+  border: none;
+  border-radius: 5px;
+}
+
+input {
+  margin: 1rem 0;
+  padding: 0.4em 0.3em;
+  min-width: 70vw;
+  font-weight: normal;
+}
+
+button {
+  padding: 0.2em 0.5em;
+  cursor: pointer;
+}
