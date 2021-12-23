@@ -6,31 +6,32 @@ form.addEventListener("submit", handleSubmit);
 function handleSubmit(e) {
   e.preventDefault();
 
-  const bracketRegex = /\([0-9+-/*^ ]+\)/;
   let expression = e.target.expression.value.trim();
+
+  const bracketRegex = /\([0-9+-/*^ ]+\)/;
 
   if (bracketRegex.test(expression)) {
     expression.match(new RegExp(bracketRegex, "g")).forEach((rawExp) => {
       const solvedExp = solveExpression(rawExp.replace(/[()]/g, ""));
       expression = expression.replace(rawExp, solvedExp);
     });
-    console.log("After bracket", expression);
   }
 
   expression = solveExpression(expression);
 
-  // TODO: Do something about expression like (3-4) / (2-3)
   result.textContent = `Result: ${expression}`;
-  console.log(expression);
 }
 
 function solveExpression(expression) {
   if (!expression) return 0;
 
   const addOrSubRegex =
-    /(?<![\+|-])([0-9]+\.?[0-9]*|\.[0-9]+)\s*(\+|-)\s*([0-9]+\.?[0-9]*|\.[0-9]+)/;
+    /([-]?\s*([0-9]+\.?[0-9]*|\.[0-9]+))\s*(\+|-)\s*([-]?\s*([0-9]+\.?[0-9]*|\.[0-9]+))/;
+
   const divideOrMultiplyRegex =
-    /(?<![\/|\*])([0-9]+\.?[0-9]*|\.[0-9]+)\s*(\/|\*)\s*([0-9]+\.?[0-9]*|\.[0-9]+)/;
+    /(?<![\/|\*]\s*)([-]?\s*([0-9]+\.?[0-9]*|\.[0-9]+))\s*(\/|\*)\s*([-]?\s*([0-9]+\.?[0-9]*|\.[0-9]+))/;
+
+  // Find basic expressions like 5 ^ 3
   const exponentRegex =
     /([0-9]+\.?[0-9]*|\.[0-9]+)\s*(\^)\s*([0-9]+\.?[0-9]*|\.[0-9]+)/;
 
@@ -43,48 +44,54 @@ function solveExpression(expression) {
   if (addOrSubRegex.test(expression))
     expression = solveOperation(expression, addOrSubRegex);
 
+  if (/ /g.test(expression)) {
+    expression = expression
+      .split(" ")
+      .reduce((prev, current) => Number(prev) + Number(current), 0);
+  }
+
   return expression;
 }
 
 function solveOperation(expression, regex) {
-  console.log("Initial", expression);
-  console.log("Matches", expression.match(new RegExp(regex, "g")));
   expression.match(new RegExp(regex, "g")).forEach((rawExp) => {
     console.log("Expression", rawExp);
-    const operation = rawExp.match(regex)[2];
-    const exp = rawExp.split(operation).map((num) => num.trim());
-    console.log(operation);
+    const exp = rawExp.match(regex);
+
+    const operation = exp.length === 4 ? exp[2] : exp[3];
+    let num1 = Number(exp[1].replace(/ /g, "")); // Space between sign and value is removed
+    let num2 = exp.length === 4 ? exp[3] : exp[4];
+    num2 = Number(num2.replace(/ /g, ""));
 
     let result;
 
     switch (operation) {
       case "^": {
-        result = Math.pow(Number(exp[0]), Number(exp[1]));
+        result = Math.pow(num1, num2);
         break;
       }
       case "*": {
-        result = Number(exp[0]) * Number(exp[1]);
+        result = num1 * num2;
         break;
       }
       case "/": {
-        result = Number(exp[0]) / Number(exp[1]);
+        result = num1 / num2;
         break;
       }
       case "-": {
-        result = Number(exp[0]) - Number(exp[1]);
+        result = num1 - num2;
         break;
       }
       case "+": {
-        result = Number(exp[0]) + Number(exp[1]);
+        result = num1 + num2;
         break;
       }
     }
 
-    console.log("Result", result);
     expression = expression.replace(rawExp, result.toString());
   });
 
-  if (regex.test(expression)) return solveOperation(expression, regex);
+  if (regex.test(expression)) return solveExpression(expression, regex);
 
   return expression;
 }
