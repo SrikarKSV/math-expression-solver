@@ -1,17 +1,26 @@
 const form = document.querySelector("form");
+const result = document.querySelector("p");
 
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  solveExpression(e.target.expression.value);
-});
+form.addEventListener("submit", handleSubmit);
 
 function handleSubmit(e) {
   e.preventDefault();
 
   const bracketRegex = /\([0-9+-/*^ ]+\)/;
-  const expression = e.target.expression.value.trim();
+  let expression = e.target.expression.value.trim();
+
+  if (bracketRegex.test(expression)) {
+    expression.match(new RegExp(bracketRegex, "g")).forEach((rawExp) => {
+      const solvedExp = solveExpression(rawExp.replace(/[()]/g, ""));
+      expression = expression.replace(rawExp, solvedExp);
+    });
+    console.log("After bracket", expression);
+  }
 
   expression = solveExpression(expression);
+
+  // TODO: Do something about expression like (3-4) / (2-3)
+  result.textContent = `Result: ${expression}`;
   console.log(expression);
 }
 
@@ -20,13 +29,10 @@ function solveExpression(expression) {
 
   const addOrSubRegex =
     /(?<![\+|-])([0-9]+\.?[0-9]*|\.[0-9]+)\s*(\+|-)\s*([0-9]+\.?[0-9]*|\.[0-9]+)/;
-  //   const subRegex = /\d{1,}\s*-\s*\d{1,}/;
   const divideOrMultiplyRegex =
     /(?<![\/|\*])([0-9]+\.?[0-9]*|\.[0-9]+)\s*(\/|\*)\s*([0-9]+\.?[0-9]*|\.[0-9]+)/;
-  //   const multiplyRegex = /\d{1,}\s*\*\s*\d{1,}/;
   const exponentRegex =
     /([0-9]+\.?[0-9]*|\.[0-9]+)\s*(\^)\s*([0-9]+\.?[0-9]*|\.[0-9]+)/;
-  const bracketRegex = /\([0-9+-/*^ ]+\)/;
 
   if (exponentRegex.test(expression))
     expression = solveOperation(expression, exponentRegex);
@@ -42,8 +48,9 @@ function solveExpression(expression) {
 
 function solveOperation(expression, regex) {
   console.log("Initial", expression);
-  console.log(expression.match(new RegExp(regex, "g")));
+  console.log("Matches", expression.match(new RegExp(regex, "g")));
   expression.match(new RegExp(regex, "g")).forEach((rawExp) => {
+    console.log("Expression", rawExp);
     const operation = rawExp.match(regex)[2];
     const exp = rawExp.split(operation).map((num) => num.trim());
     console.log(operation);
@@ -73,8 +80,8 @@ function solveOperation(expression, regex) {
       }
     }
 
+    console.log("Result", result);
     expression = expression.replace(rawExp, result.toString());
-    console.log("END", expression);
   });
 
   if (regex.test(expression)) return solveOperation(expression, regex);
